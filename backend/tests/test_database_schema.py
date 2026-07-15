@@ -5,7 +5,7 @@ from app.database.database import ensure_user_schema
 
 
 class EnsureUserSchemaTests(unittest.TestCase):
-    def test_ensure_user_schema_adds_missing_password_column(self):
+    def test_ensure_user_schema_adds_missing_hashed_password_column(self):
         engine = create_engine("sqlite:///:memory:")
         try:
             with engine.begin() as conn:
@@ -15,7 +15,7 @@ class EnsureUserSchemaTests(unittest.TestCase):
 
             inspector = inspect(engine)
             columns = {column["name"] for column in inspector.get_columns("users")}
-            self.assertIn("password", columns)
+            self.assertIn("hashed_password", columns)
         finally:
             engine.dispose()
 

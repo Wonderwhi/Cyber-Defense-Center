@@ -2,17 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.auth.auth import (
+    create_access_token,
     hash_password,
     verify_password,
-    create_access_token,
 )
 from app.database.database import get_db
 from app.models.user import User
 from app.schemas.user import (
+    Token,
     UserCreate,
     UserLogin,
     UserResponse,
-    Token,
 )
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -31,7 +31,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     new_user = User(
         username=user.username,
         email=user.email,
-        hashed_password=hash_password(user.password)
+        hashed_password=hash_password(user.password),
     )
 
     db.add(new_user)
@@ -48,13 +48,14 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     if db_user is None:
         raise HTTPException(
             status_code=401,
-            detail="Invalid email or password"
+            detail="Invalid email or password",
         )
 
-    if not verify_password(user.password, db_user.hashed_password):
+    stored_password = str(db_user.hashed_password)
+    if not verify_password(user.password, stored_password):
         raise HTTPException(
             status_code=401,
-            detail="Invalid email or password"
+            detail="Invalid email or password",
         )
 
     access_token = create_access_token(
