@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
-
+# Schemas for user registration, login, and response payloads.
 class UserCreate(BaseModel):
     username: str
     email: EmailStr

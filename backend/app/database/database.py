@@ -3,17 +3,21 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.core.config import DATABASE_URL
 
+# Create the SQLAlchemy engine for the configured database.
 engine = create_engine(DATABASE_URL)
 
+# Create a factory for session objects used by requests.
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine
 )
 
+# Base class for all declarative ORM models.
 Base = declarative_base()
 
 
+# Ensure the users table exists and has the expected password hash column.
 def ensure_user_schema(engine_instance=None):
     engine_to_use = engine_instance or engine
     inspector = inspect(engine_to_use)
@@ -32,6 +36,7 @@ def ensure_user_schema(engine_instance=None):
                 conn.execute(text("ALTER TABLE users ADD COLUMN hashed_password VARCHAR(255)"))
 
 
+# Dependency provider that yields a DB session and closes it after use.
 def get_db():
     db = SessionLocal()
     try:

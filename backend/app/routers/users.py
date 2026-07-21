@@ -17,7 +17,9 @@ from app.schemas.user import (
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
+# User management routes, including registration and login.
 
+# Create a new account with a unique email and username.
 @router.post("/register", response_model=UserResponse)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     existing_email = db.query(User).filter(User.email == user.email).first()
@@ -28,6 +30,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
 
+    # Hash the supplied password before storing it.
     new_user = User(
         username=user.username,
         email=user.email,
@@ -41,6 +44,8 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
+# Verify the user’s password and issue a token on success.
+# This endpoint issues a JWT that can be used for authenticated access.
 @router.post("/login", response_model=Token)
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
@@ -51,6 +56,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             detail="Invalid email or password",
         )
 
+    # Compare the submitted password with the stored hash.
     stored_password = str(db_user.hashed_password)
     if not verify_password(user.password, stored_password):
         raise HTTPException(
