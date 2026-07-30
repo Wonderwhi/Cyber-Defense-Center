@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.database.database import Base, engine, ensure_user_schema
+from app.database.database import Base, engine, ensure_incident_schema, ensure_user_schema
 from app.routers.users import router as users_router
 
 from app.models.user import User
@@ -14,6 +14,9 @@ Base.metadata.create_all(bind=engine)
 
 # Ensure the users table has the required auth column when the app starts.
 ensure_user_schema(engine)
+
+# Ensure incidents table includes columns added after initial project setup.
+ensure_incident_schema(engine)
 
 app = FastAPI(
     title="Cyber Defense Center",

@@ -36,6 +36,31 @@ def ensure_user_schema(engine_instance=None):
                 conn.execute(text("ALTER TABLE users ADD COLUMN hashed_password VARCHAR(255)"))
 
 
+# Ensure incidents table has the reporter link expected by the ORM model.
+def ensure_incident_schema(engine_instance=None):
+    engine_to_use = engine_instance or engine
+    inspector = inspect(engine_to_use)
+
+    if not inspector.has_table("incidents"):
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("incidents")}
+    if "reported_by" not in columns:
+        with engine_to_use.begin() as conn:
+            conn.execute(text("ALTER TABLE incidents ADD COLUMN reported_by INTEGER"))
+
+    # Legacy schemas can have updated_at as NOT NULL, but inserts set it later.
+    column_meta = {column["name"]: column for column in inspector.get_columns("incidents")}
+    updated_at = column_meta.get("updated_at")
+    if (
+        updated_at is not None
+        and updated_at.get("nullable") is False
+        and engine_to_use.dialect.name == "postgresql"
+    ):
+        with engine_to_use.begin() as conn:
+            conn.execute(text("ALTER TABLE incidents ALTER COLUMN updated_at DROP NOT NULL"))
+
+
 # Dependency provider that yields a DB session and closes it after use.
 def get_db():
     db = SessionLocal()
