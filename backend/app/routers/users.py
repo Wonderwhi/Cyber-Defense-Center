@@ -51,6 +51,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
 
     if db_user is None:
+        print(f"Login failed: user not found for email={user.email}")
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password",
@@ -59,11 +60,13 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     # Compare the submitted password with the stored hash.
     stored_password = str(db_user.hashed_password)
     if not verify_password(user.password, stored_password):
+        print(f"Login failed: password verification failed for email={user.email}")
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password",
         )
 
+    print(f"Login successful for email={user.email}")
     access_token = create_access_token(
         data={
             "sub": db_user.email,
