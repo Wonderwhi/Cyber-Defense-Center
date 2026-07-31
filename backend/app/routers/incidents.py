@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.database import SessionLocal
@@ -52,8 +54,37 @@ def create_incident(
 
 
 @router.get("/", response_model=list[IncidentResponse])
-def get_incidents(db: Session = Depends(get_db)):
-    return db.query(Incident).all()
+def get_incidents(
+    search: Optional[str] = Query(None),
+    sort_by: str = Query("created_at"),
+    order: str = Query("desc"),
+    db: Session = Depends(get_db),
+):
+    # Start with the full incidents query, then layer on filters and sorting.
+    query = db.query(Incident)
+
+    # Search title and description with a case-insensitive partial match.
+    if search:
+        query = query.filter(
+            (Incident.title.ilike(f"%{search}%")) |
+            (Incident.description.ilike(f"%{search}%"))
+        )
+
+    # Allow only a small, predictable set of sort fields.
+    if sort_by == "severity":
+        sort_column = Incident.severity
+    elif sort_by == "title":
+        sort_column = Incident.title
+    else:
+        sort_column = Incident.created_at
+
+    # Default to newest-first unless the caller explicitly asks for ascending order.
+    if order.lower() == "asc":
+        query = query.order_by(sort_column.asc())
+    else:
+        query = query.order_by(sort_column.desc())
+
+    return query.all()
 
 
 @router.get("/{incident_id}", response_model=IncidentResponse)
