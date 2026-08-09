@@ -1,0 +1,108 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from typing import TypedDict
+
+from app.database.database import get_db
+from app.models.incident import Incident
+
+router = APIRouter()
+
+
+class PriorityStats(TypedDict):
+    high: int
+    medium: int
+    low: int
+
+
+class CategoryStats(TypedDict):
+    phishing: int
+    malware: int
+    ransomware: int
+
+
+class DashboardStatsResponse(TypedDict):
+    total_incidents: int
+    open_incidents: int
+    closed_incidents: int
+    critical_incidents: int
+    priority: PriorityStats
+    categories: CategoryStats
+
+
+@router.get("/stats")
+def get_dashboard_stats(db: Session = Depends(get_db)) -> DashboardStatsResponse:
+    # High-level counters used for the top summary cards.
+    total = int(db.query(Incident).count())
+
+    open_incidents = (
+        db.query(Incident)
+        .filter(Incident.status == "Open")
+        .count()
+    )
+
+    closed_incidents = (
+        db.query(Incident)
+        .filter(Incident.status == "Closed")
+        .count()
+    )
+
+    critical_incidents = (
+        db.query(Incident)
+        .filter(Incident.severity == "Critical")
+        .count()
+    )
+
+    # Priority distribution helps analysts decide triage order.
+    high_priority = (
+        db.query(Incident)
+        .filter(Incident.priority == "High")
+        .count()
+    )
+
+    medium_priority = (
+        db.query(Incident)
+        .filter(Incident.priority == "Medium")
+        .count()
+    )
+
+    low_priority = (
+        db.query(Incident)
+        .filter(Incident.priority == "Low")
+        .count()
+    )
+
+    # Category breakdown feeds charts in the dashboard view.
+    phishing = (
+        db.query(Incident)
+        .filter(Incident.category == "Phishing")
+        .count()
+    )
+
+    malware = (
+        db.query(Incident)
+        .filter(Incident.category == "Malware")
+        .count()
+    )
+
+    ransomware = (
+        db.query(Incident)
+        .filter(Incident.category == "Ransomware")
+        .count()
+    )
+
+    return {
+        "total_incidents": total,
+        "open_incidents": int(open_incidents),
+        "closed_incidents": int(closed_incidents),
+        "critical_incidents": int(critical_incidents),
+        "priority": {
+            "high": int(high_priority),
+            "medium": int(medium_priority),
+            "low": int(low_priority),
+        },
+        "categories": {
+            "phishing": int(phishing),
+            "malware": int(malware),
+            "ransomware": int(ransomware),
+        },
+    }

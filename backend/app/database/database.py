@@ -73,6 +73,7 @@ def ensure_incident_schema(engine_instance: Engine | None = None) -> None:
 
     columns = {column["name"] for column in inspector.get_columns("incidents")}
 
+    # Keep the link to the user who originally reported the incident.
     if "reported_by" not in columns:
         with engine_to_use.begin() as conn:
             conn.execute(
@@ -81,12 +82,30 @@ def ensure_incident_schema(engine_instance: Engine | None = None) -> None:
                 )
             )
 
-    # NEW: Add assigned_to if it doesn't exist.
+    # Add the analyst assignment column used during triage and investigation.
     if "assigned_to" not in columns:
         with engine_to_use.begin() as conn:
             conn.execute(
                 text(
                     "ALTER TABLE incidents ADD COLUMN assigned_to INTEGER"
+                )
+            )
+
+    # Category supports filtering and dashboard groupings (phishing, malware, etc.).
+    if "category" not in columns:
+        with engine_to_use.begin() as conn:
+            conn.execute(
+                text(
+                    "ALTER TABLE incidents ADD COLUMN category VARCHAR(100) DEFAULT 'General'"
+                )
+            )
+
+    # Priority lets analysts rank response order independent of severity.
+    if "priority" not in columns:
+        with engine_to_use.begin() as conn:
+            conn.execute(
+                text(
+                    "ALTER TABLE incidents ADD COLUMN priority VARCHAR(50) DEFAULT 'Medium'"
                 )
             )
 

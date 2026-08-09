@@ -17,10 +17,40 @@ class Incident(Base):
     __tablename__ = "incidents"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str] = mapped_column(String(1000), nullable=False)
-    severity: Mapped[str] = mapped_column(String(50), nullable=False)
-    status: Mapped[str] = mapped_column(String(50), default="Open")
+
+    title: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    description: Mapped[str] = mapped_column(
+        String(1000),
+        nullable=False,
+    )
+
+    severity: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+    )
+
+    # NEW: Incident category
+    category: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        default="General",
+    )
+
+    # NEW: Incident priority
+    priority: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="Medium",
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(50),
+        default="Open",
+    )
 
     # User who reported the incident
     reported_by: Mapped[int] = mapped_column(
