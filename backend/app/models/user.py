@@ -13,5 +13,16 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     role = Column(String(50), default="Viewer")
 
-    # This relationship lets SQLAlchemy load incidents reported by this user.
-    reported_incidents = relationship("Incident", back_populates="reporter")
+    # Incidents this user reported
+    reported_incidents = relationship(
+        "Incident",
+        foreign_keys="Incident.reported_by",
+        back_populates="reporter",
+    )
+
+    # Incidents assigned to this user
+    assigned_incidents = relationship(
+        "Incident",
+        foreign_keys="Incident.assigned_to",
+        back_populates="assignee",
+    )

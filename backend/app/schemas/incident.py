@@ -1,22 +1,27 @@
-from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
 
 
 class IncidentCreate(BaseModel):
     title: str
     description: str
     severity: str
+    status: str = "Open"
     reported_by: int
-    # reported_by must be an existing user ID from the users table.
+    assigned_to: Optional[int] = None
+    # Both fields point to user records when they are provided.
 
 
 class IncidentUpdate(BaseModel):
-    title: str
-    description: str
-    severity: str
-    status: str
-    reported_by: int
-    # The update payload can also change the incident owner if needed.
+    title: Optional[str] = None
+    description: Optional[str] = None
+    severity: Optional[str] = None
+    status: Optional[str] = None
+    reported_by: Optional[int] = None
+    assigned_to: Optional[int] = None
+    # Partial updates are allowed, so every field stays optional here.
 
 
 class IncidentResponse(BaseModel):
@@ -26,8 +31,8 @@ class IncidentResponse(BaseModel):
     severity: str
     status: str
     reported_by: int
-    created_at: datetime | None
-    updated_at: datetime | None
+    assigned_to: Optional[int] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

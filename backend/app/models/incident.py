@@ -22,10 +22,40 @@ class Incident(Base):
     severity: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="Open")
 
-    # reported_by links this incident back to the user who created it.
-    reported_by: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    # User who reported the incident
+    reported_by: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+    )
 
-    # Relationship to the reporting User object.
-    reporter: Mapped["User"] = relationship("User", back_populates="reported_incidents")
-    created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), onupdate=func.now())
+    # Analyst assigned to investigate the incident
+    assigned_to: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+    )
+
+    # Relationship to the reporting user
+    reporter: Mapped["User"] = relationship(
+        "User",
+        foreign_keys=[reported_by],
+        back_populates="reported_incidents",
+    )
+
+    # Relationship to the assigned analyst
+    assignee: Mapped["User"] = relationship(
+        "User",
+        foreign_keys=[assigned_to],
+        back_populates="assigned_incidents",
+    )
+
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        onupdate=func.now(),
+    )

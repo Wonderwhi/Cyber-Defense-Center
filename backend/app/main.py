@@ -1,21 +1,26 @@
 from fastapi import FastAPI
 
-from app.database.database import Base, engine, ensure_incident_schema, ensure_user_schema
-from app.routers.users import router as users_router
+from app.database.database import (
+    Base,
+    engine,
+    ensure_incident_schema,
+    ensure_user_schema,
+)
 
 from app.models.user import User
 from app.models.incident import Incident
 
-from app.routers.incidents import router as incidents_router
+from app.routers.users import router as users_router
+from app.api.incidents import router as incidents_router
 
-# Create all database tables that are defined in the SQLAlchemy models.
-# This is a simple schema creation step used by this project at startup.
+# These imports make sure SQLAlchemy sees both tables before startup.
+_ = (User, Incident)
+
+# Create all database tables defined by the SQLAlchemy models.
 Base.metadata.create_all(bind=engine)
 
-# Ensure the users table has the required auth column when the app starts.
+# Patch older local databases so the app can still boot cleanly.
 ensure_user_schema(engine)
-
-# Ensure incidents table includes columns added after initial project setup.
 ensure_incident_schema(engine)
 
 app = FastAPI(
@@ -24,9 +29,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Mount the routers so these API routes are available under the app.
+# Wire the user and incident endpoints into the app.
 app.include_router(users_router)
-app.include_router(incidents_router)
+app.include_router(
+    incidents_router,
+    prefix="/incidents",
+    tags=["Incidents"],
+)
 
 
 @app.get("/")
@@ -34,5 +43,5 @@ def root():
     return {
         "application": "Cyber Defense Center",
         "status": "Running",
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
