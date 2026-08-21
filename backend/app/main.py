@@ -13,6 +13,7 @@ from app.models.incident import Incident
 from app.routers.users import router as users_router
 from app.api.incidents import router as incidents_router
 from app.api.dashboard import router as dashboard_router
+from fastapi.middleware.cors import CORSMiddleware
 
 # SQLAlchemy needs these model imports loaded before create_all() runs.
 _ = (User, Incident)
@@ -28,6 +29,17 @@ app = FastAPI(
     title="Cyber Defense Center",
     description="A cybersecurity platform for monitoring security events, vulnerabilities, incidents, and threat intelligence.",
     version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Users routes handle auth and account operations.

@@ -9,18 +9,24 @@ router = APIRouter()
 
 
 class PriorityStats(TypedDict):
+    """The number of incidents at each priority level."""
+
     high: int
     medium: int
     low: int
 
 
 class CategoryStats(TypedDict):
+    """The number of incidents in each category."""
+
     phishing: int
     malware: int
     ransomware: int
 
 
 class DashboardStatsResponse(TypedDict):
+    """The data shown in the dashboard summary and charts."""
+
     total_incidents: int
     open_incidents: int
     closed_incidents: int
@@ -31,7 +37,9 @@ class DashboardStatsResponse(TypedDict):
 
 @router.get("/stats")
 def get_dashboard_stats(db: Session = Depends(get_db)) -> DashboardStatsResponse:
-    # High-level counters used for the top summary cards.
+    """Get the incident counts needed by the dashboard."""
+
+    # These counts appear in the summary cards at the top of the dashboard.
     total = int(db.query(Incident).count())
 
     open_incidents = (
@@ -52,7 +60,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> DashboardStatsResponse
         .count()
     )
 
-    # Priority distribution helps analysts decide triage order.
+    # Use the same capitalization as the values stored in the database.
+    # The dashboard uses these numbers to show the priority breakdown.
     high_priority = (
         db.query(Incident)
         .filter(Incident.priority == "High")
@@ -71,7 +80,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> DashboardStatsResponse
         .count()
     )
 
-    # Category breakdown feeds charts in the dashboard view.
+    # These numbers populate the category chart. A spelling or capitalization
+    # change here would make a category appear empty even when it has records.
     phishing = (
         db.query(Incident)
         .filter(Incident.category == "Phishing")
